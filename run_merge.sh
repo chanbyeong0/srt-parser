@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SRT 병합 스크립트 실행기
-# 사용법: ./run_merge.sh input.srt [threshold] [output_path]
+# 사용법: ./run_merge.sh input.srt [output_path] [threshold]
 # 출력 파일은 기본적으로 output/input_stage.srt로 생성됩니다.
 # 입력/출력 파일은 절대 경로 또는 상대 경로 모두 지원합니다.
 
@@ -26,18 +26,32 @@ source venv/bin/activate
 
 # 인수 확인
 if [ $# -lt 1 ]; then
-    echo "사용법: $0 input.srt [threshold] [output_path]"
-    echo "예시: $0 input.srt 1.0"
-    echo "예시: $0 /path/to/file.srt 1.5"
-    echo "예시: $0 input.srt 1.0 /custom/output/path.srt"
-    echo "예시: $0 input.srt 1.0 custom_output.srt"
+    echo "사용법: $0 input.srt [output_path] [threshold]"
+    echo "예시: $0 input.srt"
+    echo "예시: $0 input.srt output.srt"
+    echo "예시: $0 input.srt /custom/output/path.srt"
+    echo "예시: $0 input.srt output.srt 1.5"
+    echo "예시: $0 /path/to/file.srt /path/to/output.srt 2.0"
     echo "기본 출력: output/filename_stage.srt"
+    echo "기본 임계값: 1.0초"
     exit 1
 fi
 
 INPUT_FILE="$1"
-THRESHOLD="${2:-1.0}"  # 기본값 1.0초 (명시적으로 설정)
-CUSTOM_OUTPUT="$3"     # 사용자 지정 출력 경로 (선택사항)
+
+# 두 번째 인수가 숫자인지 확인 (임계값인지 출력 경로인지 판단)
+if [[ "$2" =~ ^[0-9]*\.?[0-9]+$ ]]; then
+    # 두 번째 인수가 숫자면 임계값으로 처리 (이전 버전 호환성)
+    THRESHOLD="$2"
+    CUSTOM_OUTPUT="$3"
+else
+    # 두 번째 인수가 숫자가 아니면 출력 경로로 처리
+    CUSTOM_OUTPUT="$2"
+    THRESHOLD="${3:-1.0}"  # 세 번째 인수가 임계값, 없으면 기본값 1.0초
+fi
+
+# 임계값이 설정되지 않았으면 기본값 사용
+THRESHOLD="${THRESHOLD:-1.0}"
 
 # 입력 파일 경로 처리
 if [[ "$INPUT_FILE" = /* ]]; then

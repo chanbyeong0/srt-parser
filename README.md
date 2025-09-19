@@ -51,20 +51,26 @@ input.srt → output/input_stage.srt
 # 기본값 사용 (1초 임계값, 자동 출력 경로)
 ./run_merge.sh input.srt
 
-# 다른 임계값 사용
-./run_merge.sh input.srt 1.5
+# 출력 파일 경로 지정
+./run_merge.sh input.srt custom_output.srt
+./run_merge.sh input.srt /full/path/to/output.srt
+./run_merge.sh input.srt results/processed/final.srt
+
+# 출력 경로 + 임계값 지정
+./run_merge.sh input.srt custom_output.srt 1.5
+./run_merge.sh input.srt /full/path/to/output.srt 2.0
 
 # 절대 경로 사용
-./run_merge.sh /path/to/your/file.srt 2.0
+./run_merge.sh /path/to/your/file.srt /path/to/output.srt
+./run_merge.sh /path/to/your/file.srt /path/to/output.srt 1.5
 
-# 출력 파일 경로 지정
-./run_merge.sh input.srt 1.0 custom_output.srt
-./run_merge.sh input.srt 1.5 /full/path/to/output.srt
-./run_merge.sh input.srt 2.0 results/processed/final.srt
+# 이전 버전 호환성 (임계값만 지정)
+./run_merge.sh input.srt 1.5
+./run_merge.sh input.srt 2.0
 
 # 다른 디렉토리에서 실행 (상대 경로)
 cd /Users/mago/Downloads
-/path/to/srt_parser/run_merge.sh subfolder/input.srt 1.0 ../output.srt
+/path/to/srt_parser/run_merge.sh subfolder/input.srt ../output.srt 1.0
 ```
 
 ### 수동 실행
