@@ -3,11 +3,18 @@
 # SRT 병합 스크립트 실행기
 # 사용법: ./run_merge.sh input.srt [threshold]
 # 출력 파일은 자동으로 input_stage.srt로 생성됩니다.
+# 입력 파일은 절대 경로 또는 상대 경로 모두 지원합니다.
 
 set -e  # 오류 발생 시 스크립트 중단
 
+# 스크립트 디렉토리 저장
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# 현재 작업 디렉토리 저장 (스크립트 실행 시점)
+ORIGINAL_PWD="$PWD"
+
 # 프로젝트 디렉토리로 이동
-cd "$(dirname "$0")"
+cd "$SCRIPT_DIR"
 
 # 가상환경 활성화
 if [ ! -d "venv" ]; then
@@ -21,15 +28,31 @@ source venv/bin/activate
 if [ $# -lt 1 ]; then
     echo "사용법: $0 input.srt [threshold]"
     echo "예시: $0 input.srt 1.0"
-    echo "출력: input_stage.srt가 자동 생성됩니다."
+    echo "예시: $0 /path/to/file.srt 1.5"
+    echo "출력: output/filename_stage.srt가 자동 생성됩니다."
     exit 1
 fi
 
 INPUT_FILE="$1"
 THRESHOLD="${2:-1.0}"  # 기본값 1.0초 (명시적으로 설정)
 
-# 출력 디렉토리 생성
-OUTPUT_DIR="output"
+# 입력 파일 경로 처리
+if [[ "$INPUT_FILE" = /* ]]; then
+    # 절대 경로인 경우
+    FULL_INPUT_PATH="$INPUT_FILE"
+else
+    # 상대 경로인 경우 - 스크립트 실행 시점의 현재 디렉토리 기준
+    FULL_INPUT_PATH="$ORIGINAL_PWD/$INPUT_FILE"
+fi
+
+# 입력 파일 존재 확인
+if [ ! -f "$FULL_INPUT_PATH" ]; then
+    echo "오류: 입력 파일 '$FULL_INPUT_PATH'이 존재하지 않습니다."
+    exit 1
+fi
+
+# 출력 디렉토리 생성 (스크립트 디렉토리 기준)
+OUTPUT_DIR="$SCRIPT_DIR/output"
 if [ ! -d "$OUTPUT_DIR" ]; then
     mkdir -p "$OUTPUT_DIR"
     echo "출력 디렉토리 '$OUTPUT_DIR'를 생성했습니다."
@@ -40,12 +63,6 @@ BASENAME=$(basename "${INPUT_FILE%.*}")
 EXTENSION="${INPUT_FILE##*.}"
 OUTPUT_FILE="${OUTPUT_DIR}/${BASENAME}_stage.${EXTENSION}"
 
-# 입력 파일 존재 확인
-if [ ! -f "$INPUT_FILE" ]; then
-    echo "오류: 입력 파일 '$INPUT_FILE'이 존재하지 않습니다."
-    exit 1
-fi
-
 echo "=== SRT 병합 시작 ==="
 echo "입력 파일: $INPUT_FILE"
 echo "출력 파일: $OUTPUT_FILE" 
@@ -53,7 +70,7 @@ echo "병합 임계값: ${THRESHOLD}초"
 echo ""
 
 # 스크립트 실행
-python merge_srt.py "$INPUT_FILE" "$OUTPUT_FILE" --threshold "$THRESHOLD"
+python merge_srt.py "$FULL_INPUT_PATH" "$OUTPUT_FILE" --threshold "$THRESHOLD"
 
 if [ $? -eq 0 ]; then
     echo ""
@@ -61,7 +78,7 @@ if [ $? -eq 0 ]; then
     
     # 파일 크기 비교
     if command -v stat >/dev/null 2>&1; then
-        INPUT_SIZE=$(stat -f%z "$INPUT_FILE" 2>/dev/null || echo "알 수 없음")
+        INPUT_SIZE=$(stat -f%z "$FULL_INPUT_PATH" 2>/dev/null || echo "알 수 없음")
         OUTPUT_SIZE=$(stat -f%z "$OUTPUT_FILE" 2>/dev/null || echo "알 수 없음")
         echo "원본 크기: ${INPUT_SIZE} bytes"
         echo "병합 후 크기: ${OUTPUT_SIZE} bytes"

@@ -53,6 +53,13 @@ input.srt → output/input_stage.srt
 
 # 다른 임계값 사용
 ./run_merge.sh input.srt 1.5
+
+# 절대 경로 사용
+./run_merge.sh /path/to/your/file.srt 2.0
+
+# 다른 디렉토리에서 실행 (상대 경로)
+cd /Users/mago/Downloads
+/path/to/srt_parser/run_merge.sh subfolder/input.srt
 ```
 
 ### 수동 실행
