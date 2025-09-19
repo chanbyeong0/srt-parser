@@ -48,7 +48,7 @@ input.srt → output/input_stage.srt
 
 ### 간편 실행
 ```bash
-# 기본값 사용 (1초 임계값)
+# 기본값 사용 (1초 임계값, 자동 출력 경로)
 ./run_merge.sh input.srt
 
 # 다른 임계값 사용
@@ -57,9 +57,14 @@ input.srt → output/input_stage.srt
 # 절대 경로 사용
 ./run_merge.sh /path/to/your/file.srt 2.0
 
+# 출력 파일 경로 지정
+./run_merge.sh input.srt 1.0 custom_output.srt
+./run_merge.sh input.srt 1.5 /full/path/to/output.srt
+./run_merge.sh input.srt 2.0 results/processed/final.srt
+
 # 다른 디렉토리에서 실행 (상대 경로)
 cd /Users/mago/Downloads
-/path/to/srt_parser/run_merge.sh subfolder/input.srt
+/path/to/srt_parser/run_merge.sh subfolder/input.srt 1.0 ../output.srt
 ```
 
 ### 수동 실행

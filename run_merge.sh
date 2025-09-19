@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # SRT 병합 스크립트 실행기
-# 사용법: ./run_merge.sh input.srt [threshold]
-# 출력 파일은 자동으로 input_stage.srt로 생성됩니다.
-# 입력 파일은 절대 경로 또는 상대 경로 모두 지원합니다.
+# 사용법: ./run_merge.sh input.srt [threshold] [output_path]
+# 출력 파일은 기본적으로 output/input_stage.srt로 생성됩니다.
+# 입력/출력 파일은 절대 경로 또는 상대 경로 모두 지원합니다.
 
 set -e  # 오류 발생 시 스크립트 중단
 
@@ -26,15 +26,18 @@ source venv/bin/activate
 
 # 인수 확인
 if [ $# -lt 1 ]; then
-    echo "사용법: $0 input.srt [threshold]"
+    echo "사용법: $0 input.srt [threshold] [output_path]"
     echo "예시: $0 input.srt 1.0"
     echo "예시: $0 /path/to/file.srt 1.5"
-    echo "출력: output/filename_stage.srt가 자동 생성됩니다."
+    echo "예시: $0 input.srt 1.0 /custom/output/path.srt"
+    echo "예시: $0 input.srt 1.0 custom_output.srt"
+    echo "기본 출력: output/filename_stage.srt"
     exit 1
 fi
 
 INPUT_FILE="$1"
 THRESHOLD="${2:-1.0}"  # 기본값 1.0초 (명시적으로 설정)
+CUSTOM_OUTPUT="$3"     # 사용자 지정 출력 경로 (선택사항)
 
 # 입력 파일 경로 처리
 if [[ "$INPUT_FILE" = /* ]]; then
@@ -51,17 +54,36 @@ if [ ! -f "$FULL_INPUT_PATH" ]; then
     exit 1
 fi
 
-# 출력 디렉토리 생성 (스크립트 디렉토리 기준)
-OUTPUT_DIR="$SCRIPT_DIR/output"
-if [ ! -d "$OUTPUT_DIR" ]; then
-    mkdir -p "$OUTPUT_DIR"
-    echo "출력 디렉토리 '$OUTPUT_DIR'를 생성했습니다."
+# 출력 파일 경로 처리
+if [ -n "$CUSTOM_OUTPUT" ]; then
+    # 사용자가 출력 경로를 지정한 경우
+    if [[ "$CUSTOM_OUTPUT" = /* ]]; then
+        # 절대 경로인 경우
+        OUTPUT_FILE="$CUSTOM_OUTPUT"
+    else
+        # 상대 경로인 경우 - 스크립트 실행 시점의 현재 디렉토리 기준
+        OUTPUT_FILE="$ORIGINAL_PWD/$CUSTOM_OUTPUT"
+    fi
+    
+    # 출력 디렉토리 생성
+    OUTPUT_DIR=$(dirname "$OUTPUT_FILE")
+    if [ ! -d "$OUTPUT_DIR" ]; then
+        mkdir -p "$OUTPUT_DIR"
+        echo "출력 디렉토리 '$OUTPUT_DIR'를 생성했습니다."
+    fi
+else
+    # 기본 출력 경로 사용 (스크립트 디렉토리 기준)
+    DEFAULT_OUTPUT_DIR="$SCRIPT_DIR/output"
+    if [ ! -d "$DEFAULT_OUTPUT_DIR" ]; then
+        mkdir -p "$DEFAULT_OUTPUT_DIR"
+        echo "출력 디렉토리 '$DEFAULT_OUTPUT_DIR'를 생성했습니다."
+    fi
+    
+    # 출력 파일명 자동 생성 (확장자 제거 후 _stage 추가하여 output 폴더에 저장)
+    BASENAME=$(basename "${INPUT_FILE%.*}")
+    EXTENSION="${INPUT_FILE##*.}"
+    OUTPUT_FILE="${DEFAULT_OUTPUT_DIR}/${BASENAME}_stage.${EXTENSION}"
 fi
-
-# 출력 파일명 자동 생성 (확장자 제거 후 _stage 추가하여 output 폴더에 저장)
-BASENAME=$(basename "${INPUT_FILE%.*}")
-EXTENSION="${INPUT_FILE##*.}"
-OUTPUT_FILE="${OUTPUT_DIR}/${BASENAME}_stage.${EXTENSION}"
 
 echo "=== SRT 병합 시작 ==="
 echo "입력 파일: $INPUT_FILE"
